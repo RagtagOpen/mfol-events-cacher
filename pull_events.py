@@ -37,23 +37,30 @@ def fetch_events_as_geojson():
 
         features.append(feature)
 
+    # Sort by the ID so the output is deterministic
+    features.sort(key=lambda i: i['properties']['id'])
+
     feature_coll = {
         'type': 'FeatureCollection',
         'features': features,
     }
+
+    print("Retrieved %s event features" % len(features))
 
     return json.dumps(feature_coll, separators=(',',':'))
 
 
 def push_to_s3(bucket, key, geojson):
     client = boto3.client('s3')
-    client.put_object(
+    response = client.put_object(
         Bucket=bucket,
         Key=key,
         Body=geojson.encode('utf8'),
         ACL='public-read',
         ContentType='application/json',
     )
+
+    print("Saved to S3, etag %s" % response['ETag'])
 
 
 def main():
